@@ -1,0 +1,128 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Catch-all deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    
+    // Auth security recommendation: Check if email is verified
+    function isVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
+
+    // --- User Rules ---
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isOwner(userId) && 
+        incoming().keys().hasAll(['fullName', 'username', 'email', 'role']) &&
+        incoming().role == 'STUDENT';
+      allow update: if isOwner(userId) && 
+        incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'bio', 'image', 'college', 'department', 'level', 'isOnline', 'lastSeen', 'reputation', 'isLookingForStudyPartner']);
+    }
+
+    // --- Bookmark Rules ---
+    match /bookmarks/{bookmarkId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // --- Report Rules ---
+    match /reports/{reportId} {
+      allow create: if isSignedIn();
+      allow read: if isSignedIn(); // Restricted to admins in real implementation
+    }
+
+    // --- Event Rules ---
+    match /events/{eventId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn(); // Allow students to organize events
+      allow update, delete: if isSignedIn() && (existing().organizerId == request.auth.uid || existing().groupId != null); 
+    }
+
+    // --- Post Rules ---
+    match /posts/{postId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && 
+        incoming().authorId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        // Action: Engagement (Likes, Comments Count)
+        incoming().diff(existing()).affectedKeys().hasAny(['likesCount', 'commentsCount']) ||
+        // Action: Poll Voting
+        (incoming().diff(existing()).affectedKeys().hasAll(['poll']) && !existing().poll.voters.contains(request.auth.uid)) ||
+        // Action: Owner Edit
+        (existing().authorId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['content', 'media', 'tags', 'scheduledAt', 'poll']))
+      );
+      allow delete: if isSignedIn() && existing().authorId == request.auth.uid;
+    }
+
+    // --- Group Rules ---
+    match /groups/{groupId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        existing().creatorId == request.auth.uid || 
+        incoming().diff(existing()).affectedKeys().hasOnly(['inviteCode']) // Simple allow for invite generation
+      );
+    }
+    
+    match /groups/{groupId}/members/{memberId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && (memberId == request.auth.uid || get(/databases/$(database)/documents/groups/$(groupId)).data.creatorId == request.auth.uid);
+    }
+
+    // --- Marketplace Rules ---
+    match /listings/{listingId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && incoming().sellerId == request.auth.uid;
+      allow update, delete: if isSignedIn() && existing().sellerId == request.auth.uid;
+    }
+
+    // --- Broadcast Rules ---
+    match /broadcasts/{broadcastId} {
+      allow read: if isSignedIn();
+      allow write: if false; 
+    }
+
+    // --- Rating Rules ---
+    match /ratings/{ratingId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && incoming().reviewerId == request.auth.uid;
+    }
+
+    // --- Group File Rules ---
+    match /groupFiles/{fileId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && incoming().uploaderId == request.auth.uid;
+      allow delete, update: if isSignedIn() && existing().uploaderId == request.auth.uid;
+    }
+
+    // --- Notification Rules ---
+    match /notifications/{notifId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && 
+        incoming().diff(existing()).affectedKeys().hasOnly(['isRead']);
+      allow create: if isSignedIn(); 
+    }
+
+    // --- Friendship Rules ---
+    match /friendships/{friendshipId} {
+      allow read: if isSignedIn() && (resource.data.user1 == request.auth.uid || resource.data.user2 == request.auth.uid || get(/databases/$(database)/documents/users/$(resource.data.user1)).data.friendListVisible == true || get(/databases/$(database)/documents/users/$(resource.data.user2)).data.friendListVisible == true);
+      allow create: if isSignedIn() && incoming().user1 == request.auth.uid;
+      allow update: if isSignedIn() && (existing().user2 == request.auth.uid || existing().user1 == request.auth.uid) && incoming().diff(existing()).affectedKeys().hasOnly(['status']);
+      allow delete: if isSignedIn() && (existing().user1 == request.auth.uid || existing().user2 == request.auth.uid);
+    }
+
+    // --- Feedback Rules ---
+    match /feedback/{feedbackId} {
+      allow create: if isSignedIn();
+    }
+  }
+}

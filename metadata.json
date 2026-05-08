@@ -1,0 +1,10 @@
+{
+  "name": "Mylasued",
+  "description": "The official professional social network for Lagos State University of Education (LASUED) students and faculty. Connect, collaborate, and grow.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ],
+  "majorCapabilities": []
+}

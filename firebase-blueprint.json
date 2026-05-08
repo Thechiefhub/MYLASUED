@@ -1,0 +1,250 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Registered student or admin of LASUED",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string" },
+        "username": { "type": "string", "description": "@username format" },
+        "email": { "type": "string" },
+        "image": { "type": "string" },
+        "bio": { "type": "string" },
+        "college": { "type": "string" },
+        "department": { "type": "string" },
+        "level": { "type": "string" },
+        "matricNumber": { "type": "string" },
+        "role": { "type": "string", "enum": ["STUDENT", "ADMIN", "SUPER_ADMIN", "MODERATOR"] },
+        "reputation": { "type": "number", "default": 0 },
+        "isLookingForStudyPartner": { "type": "boolean", "default": false },
+        "friendListVisible": { "type": "boolean", "default": true },
+        "isOnline": { "type": "boolean" },
+        "lastSeen": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["fullName", "username", "email", "college", "department", "level"]
+    },
+    "Friendship": {
+      "title": "Friendship",
+      "description": "Relationship between two students",
+      "type": "object",
+      "properties": {
+        "user1": { "type": "string", "description": "UID of first user" },
+        "user2": { "type": "string", "description": "UID of second user" },
+        "status": { "type": "string", "enum": ["PENDING", "ACCEPTED"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Bookmark": {
+      "title": "Bookmark",
+      "description": "Saved post or listing",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "itemId": { "type": "string" },
+        "type": { "type": "string", "enum": ["POST", "LISTING"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Report": {
+      "title": "Report",
+      "description": "Flagged content report",
+      "type": "object",
+      "properties": {
+        "reporterId": { "type": "string" },
+        "targetId": { "type": "string" },
+        "type": { "type": "string", "enum": ["POST", "COMMENT", "USER", "LISTING"] },
+        "reason": { "type": "string" },
+        "status": { "type": "string", "default": "PENDING" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Rating": {
+      "title": "Rating",
+      "description": "Marketplace seller rating",
+      "type": "object",
+      "properties": {
+        "reviewerId": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "listingId": { "type": "string" },
+        "stars": { "type": "number" },
+        "comment": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "GroupFile": {
+      "title": "GroupFile",
+      "description": "Study materials shared within a group",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "url": { "type": "string" },
+        "uploaderId": { "type": "string" },
+        "groupId": { "type": "string" },
+        "folder": { "type": "string", "description": "Folder name or path" },
+        "topic": { "type": "string" },
+        "type": { "type": "string", "enum": ["PDF", "DOC", "IMAGE", "OTHER"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "User alert for events, mentions, or goal reminders",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string", "enum": ["EVENT_REMINDER", "MENTION", "GOAL", "SYSTEM"] },
+        "link": { "type": "string" },
+        "isRead": { "type": "boolean", "default": false },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Feedback": {
+      "title": "Feedback",
+      "description": "Platform feedback and bug reports",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["BUG", "SUGGESTION", "OTHER"] },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Event": {
+      "title": "Event",
+      "description": "University or group event",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "time": { "type": "string" },
+        "location": { "type": "string" },
+        "category": { "type": "string" },
+        "organizerId": { "type": "string" },
+        "groupId": { "type": "string" },
+        "broadcastLink": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "GroupFolder": {
+      "title": "GroupFolder",
+      "description": "Folders for organizing study materials in a group",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "groupId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Post": {
+      "title": "Post",
+      "description": "Feed post, broadcast, or announcement",
+      "type": "object",
+      "properties": {
+        "content": { "type": "string" },
+        "media": { "type": "array", "items": { "type": "string" } },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "type": { "type": "string", "enum": ["POST", "BROADCAST", "ANNOUNCEMENT", "POLL"] },
+        "isPinned": { "type": "boolean" },
+        "isBroadcast": { "type": "boolean" },
+        "pollOptions": { "type": "string" },
+        "pollVotes": { "type": "string" },
+        "authorId": { "type": "string" },
+        "groupId": { "type": "string" },
+        "scheduledAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Group": {
+      "title": "Group",
+      "description": "Community or study group",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "type": { "type": "string" },
+        "department": { "type": "string" },
+        "inviteCode": { "type": "string" },
+        "category": { "type": "string" },
+        "coverImage": { "type": "string" },
+        "isPrivate": { "type": "boolean" },
+        "isOfficial": { "type": "boolean" },
+        "creatorId": { "type": "string" }
+      }
+    },
+    "Listing": {
+      "title": "Listing",
+      "description": "Marketplace item",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "currency": { "type": "string", "default": "NGN" },
+        "category": { "type": "string" },
+        "condition": { "type": "string" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "location": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "users": {
+      "schema": "User",
+      "description": "Profiles for all students and staff"
+    },
+    "posts": {
+      "schema": "Post",
+      "description": "Main feed items"
+    },
+    "groups": {
+      "schema": "Group",
+      "description": "LASUED student groups"
+    },
+    "listings": {
+      "schema": "Listing",
+      "description": "Marketplace items"
+    },
+    "events": {
+      "schema": "Event",
+      "description": "University and student events"
+    },
+    "bookmarks": {
+      "schema": "Bookmark",
+      "description": "Users saved items"
+    },
+    "reports": {
+      "schema": "Report",
+      "description": "Community moderation reports"
+    },
+    "ratings": {
+      "schema": "Rating",
+      "description": "Marketplace seller ratings"
+    },
+    "groupFiles": {
+      "schema": "GroupFile",
+      "description": "Study materials and group documents"
+    },
+    "groupFolders": {
+      "schema": "GroupFolder",
+      "description": "Folders for organizing group files"
+    },
+    "notifications": {
+      "schema": "Notification",
+      "description": "User alerts and reminders"
+    },
+    "feedback": {
+      "schema": "Feedback",
+      "description": "User suggestions and bug reports"
+    },
+    "friendships": {
+      "schema": "Friendship",
+      "description": "User social connections"
+    }
+  }
+}
